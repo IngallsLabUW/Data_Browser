@@ -12,20 +12,21 @@ library(base64enc)
 source("app_files/RaMS_custom.R")
 
 #Debugging things
-input <- list(mz=118.0865, ppm=5, directory=r"(G:\My Drive\FalkorFactor\mzMLs\pos\MSMS)")
-files_to_load <- function()c("G:\\My Drive\\FalkorFactor\\mzMLs\\pos\\MSMS/180205_Poo_TruePooPos_dda1.mzML",
-                             "G:\\My Drive\\FalkorFactor\\mzMLs\\pos\\MSMS/190715_Poo_TruePooFK180310_DDApos50.mzML")
+# input <- list(mz=118.0865, ppm=5, directory=r"(G:\My Drive\FalkorFactor\mzMLs\pos\MSMS)")
+# files_to_load <- function()c("G:\\My Drive\\FalkorFactor\\mzMLs\\pos\\MSMS/180205_Poo_TruePooPos_dda1.mzML",
+#                              "G:\\My Drive\\FalkorFactor\\mzMLs\\pos\\MSMS/190715_Poo_TruePooFK180310_DDApos50.mzML")
 # files_to_load <- function()c("Z:\1_QEdata\Will\MSMS_mzMLs\200929_Poo_TruePooMortality_DDApos50/mzML")
-mzml_data <- grabMzmlData(files_to_load()[[1]])
-clean_filenames <- gsub("\\.mzML$", "", basename(files_to_load()[[1]]))
-sutom_MS1_data <- cbind(mzml_data[[1]], filename=clean_filenames)
-sutom_MS2_data <- cbind(mzml_data[[2]], filename=clean_filenames)
-mzml_data <- grabMzmlData(files_to_load()[[2]])
-clean_filenames <- gsub("\\.mzML$", "", basename(files_to_load())[[2]])
-sutom_MS1_data <- rbind(sutom_MS1_data, cbind(mzml_data[[1]], filename=clean_filenames))
-sutom_MS2_data <- rbind(sutom_MS2_data, cbind(mzml_data[[2]], filename=clean_filenames))
-current_MS1_data <- function()sutom_MS1_data
-current_MS2_data <- function()sutom_MS2_data
+# files_to_load <- function()"G:\\My Drive\\FalkorFactor\\mzMLs\\pos\\190715_Poo_TruePooFK180310_Half1.mzML"
+# mzml_data <- grabMzmlData(files_to_load()[[1]])
+# clean_filenames <- gsub("\\.mzML$", "", basename(files_to_load()[[1]]))
+# sutom_MS1_data <- cbind(mzml_data[[1]], filename=clean_filenames)
+# sutom_MS2_data <- cbind(mzml_data[[2]], filename=clean_filenames)
+# mzml_data <- grabMzmlData(files_to_load()[[2]])
+# clean_filenames <- gsub("\\.mzML$", "", basename(files_to_load())[[2]])
+# sutom_MS1_data <- rbind(sutom_MS1_data, cbind(mzml_data[[1]], filename=clean_filenames))
+# sutom_MS2_data <- rbind(sutom_MS2_data, cbind(mzml_data[[2]], filename=clean_filenames))
+# current_MS1_data <- function()sutom_MS1_data
+# current_MS2_data <- function()sutom_MS2_data
 
 
 # UI ----
@@ -38,7 +39,7 @@ ui <- fluidPage(
       numericInput(inputId = "mz", label = "Enter a mass of interest:", value = 118.0865),
       numericInput(inputId = "ppm", label = "Enter instrument ppm:", value = 5),
       directoryInput('directory', label = "Choose a directory", 
-                     value = r"(G:\My Drive\FalkorFactor\mzMLs\pos\MSMS)"),
+                     value = "~"),
       br(),
       strong("Files to load:"),
       tableOutput("files_to_load"),
@@ -108,35 +109,36 @@ server <- function(input, output, session){
     if(nrow(current_MS1_data())){
       EIC <- current_MS1_data()[mz%between%pmppm(input$mz, input$ppm)]
       
-      MS2_scans <- current_MS2_data()[premz%between%pmppm(input$mz, input$ppm)]
-      MS2_scans <- unique(MS2_scans[,c("rt", "voltage", "filename")])
-      
-      
-      nearest_MS1 <- lapply(split(MS2_scans, seq_len(nrow(MS2_scans))), function(MS2_scan){
-        EIC_file <- EIC[filename==MS2_scan$filename]
-        ms1_scan_data <- EIC_file[which.min(abs(EIC_file$rt-MS2_scan$rt)), c("rt", "int")]
-        names(ms1_scan_data) <- c("rt_to_plot", "int_to_plot")
-        cbind(ms1_scan_data, MS2_scan[,c("rt", "voltage", "filename")])
-      })
-      nearest_MS1 <- do.call(what = rbind, nearest_MS1)
-      nearest_MS1$label <- paste0(
-        'Retention time: ', round(nearest_MS1$rt_to_plot, digits = 3), ' min<br>',
-        'Intensity: ', nearest_MS1$int_to_plot, '<br>',
-        'Voltage: ', nearest_MS1$voltage, '<br>',
-        'Filename: ', nearest_MS1$filename
-      )
-      
-      plot_ly(source="MS1") %>%
+      p <- plot_ly(source="MS1") %>%
         add_trace(data = EIC, type="scatter", 
                   x=~rt, y=~int, color=~filename,
                   mode="lines", hoverinfo='skip') %>%
-        add_trace(data = nearest_MS1, type="scatter", 
-                  x=~rt_to_plot, y=~int_to_plot, 
-                  color=~filename, text=~label,
-                  customdata=~rt,
-                  hovertemplate=paste0('%{text}<extra></extra>'),
-                  mode="markers", showlegend = FALSE) %>%
         layout(legend = list(orientation="h", x=0.5, y=100), showlegend=TRUE)
+      
+      if(!is.null(current_MS2_data())){
+        MS2_scans <- current_MS2_data()[premz%between%pmppm(input$mz, input$ppm)]
+        MS2_scans <- unique(MS2_scans[,c("rt", "voltage", "filename")])
+        nearest_MS1 <- lapply(split(MS2_scans, seq_len(nrow(MS2_scans))), function(MS2_scan){
+          EIC_file <- EIC[filename==MS2_scan$filename]
+          ms1_scan_data <- EIC_file[which.min(abs(EIC_file$rt-MS2_scan$rt)), c("rt", "int")]
+          names(ms1_scan_data) <- c("rt_to_plot", "int_to_plot")
+          cbind(ms1_scan_data, MS2_scan[,c("rt", "voltage", "filename")])
+        })
+        nearest_MS1 <- do.call(what = rbind, nearest_MS1)
+        nearest_MS1$label <- paste0(
+          'Retention time: ', round(nearest_MS1$rt_to_plot, digits = 3), ' min<br>',
+          'Intensity: ', nearest_MS1$int_to_plot, '<br>',
+          'Voltage: ', nearest_MS1$voltage, '<br>',
+          'Filename: ', nearest_MS1$filename
+        )
+        p <- p %>%
+          add_trace(data = nearest_MS1, type="scatter", 
+                    x=~rt_to_plot, y=~int_to_plot, 
+                    color=~filename, text=~label,
+                    customdata=~rt,
+                    hovertemplate=paste0('%{text}<extra></extra>'),
+                    mode="markers", showlegend = FALSE)
+      }
     } else {
       plot_ly(x=1, y=1, mode="text", type="scatter", text="No data found :/")
     }
@@ -191,10 +193,12 @@ server <- function(input, output, session){
     n_files <- length(files_to_load())
     withProgress({
       for(i in seq_along(files_to_load())){
+        setProgress(value = (i-1)/n_files, detail = basename(files_to_load()[[i]]))
         mzml_data <- grabMzmlData(files_to_load()[[i]])
         new_MS1_data[[i]] <- mzml_data[[1]]
         new_MS2_data[[i]] <- mzml_data[[2]]
       }
+      setProgress(value = n_files, detail = "Done!")
     }, message = "Loading your data...", value = 0)
 
     clean_filenames <- gsub("\\.mzML$", "", basename(files_to_load()))
@@ -202,11 +206,12 @@ server <- function(input, output, session){
     new_MS1_data <- mapply(cbind, new_MS1_data, clean_filenames, SIMPLIFY = FALSE)
     new_MS1_data <- do.call(what = rbind, new_MS1_data)
     new_MS1_data <- `colnames<-`(new_MS1_data, c("rt", "mz", "int", "filename"))
-    
-    new_MS2_data <- mapply(cbind, new_MS2_data, clean_filenames, SIMPLIFY = FALSE)
-    new_MS2_data <- do.call(what = rbind, new_MS2_data)
-    new_MS2_data <- `colnames<-`(new_MS2_data, c("rt", "premz", "fragmz", "int", 
-                                                 "voltage", "filename"))
+    if(!is.null(new_MS2_data)){
+      new_MS2_data <- mapply(cbind, new_MS2_data, clean_filenames, SIMPLIFY = FALSE)
+      new_MS2_data <- do.call(what = rbind, new_MS2_data)
+      new_MS2_data <- `colnames<-`(new_MS2_data, c("rt", "premz", "fragmz", "int", 
+                                                   "voltage", "filename"))
+    }
     
     current_MS1_data(rbind(current_MS1_data(), new_MS1_data))
     current_MS2_data(rbind(current_MS2_data(), new_MS2_data))

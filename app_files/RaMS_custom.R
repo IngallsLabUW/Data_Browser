@@ -48,15 +48,19 @@ grabMzmlData <- function(filename){
   ms2_xpath <- '//d1:cvParam[@name="ms level"][@value="2"]/parent::d1:spectrum'
   ms2_nodes <- xml2::xml_find_all(xml_data, ms2_xpath)
   
-  rt_vals <- grabSpectraRt(ms2_nodes)
-  premz_vals <- grabSpectraPremz(ms2_nodes)
-  mz_vals <- grabSpectraMz(ms2_nodes, file_metadata)
-  int_vals <- grabSpectraInt(ms2_nodes, file_metadata)
-  
-  ms2_data <- data.table(rt=rep(rt_vals, sapply(mz_vals, length)),
-                         premz=rep(premz_vals, sapply(mz_vals, length)),
-                         fragmz=unlist(mz_vals), int=unlist(int_vals),
-                         voltage=file_metadata$ms2_ce)
+  if(length(ms2_nodes)){
+    rt_vals <- grabSpectraRt(ms2_nodes)
+    premz_vals <- grabSpectraPremz(ms2_nodes)
+    mz_vals <- grabSpectraMz(ms2_nodes, file_metadata)
+    int_vals <- grabSpectraInt(ms2_nodes, file_metadata)
+    
+    ms2_data <- data.table(rt=rep(rt_vals, sapply(mz_vals, length)),
+                           premz=rep(premz_vals, sapply(mz_vals, length)),
+                           fragmz=unlist(mz_vals), int=unlist(int_vals),
+                           voltage=file_metadata$ms2_ce)
+  } else {
+    ms2_data <- NULL
+  }
   
   list(ms1_data, ms2_data)
 }
