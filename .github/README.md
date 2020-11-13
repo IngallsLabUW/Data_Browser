@@ -41,12 +41,14 @@ The app can be launched on Windows simply by double-clicking the "runDataBrowser
 command. This should initialize both an R script in the background and a browser
 window to interact with the app. Support for Mac and Linux upcoming shortly.
 
-![Screen as files are loading](Loadscreen.png)
+![Screen showing Rscript](Rscreen.png)
 
 First, locate the mzML files of interest by clicking on the "..." button of the
 directory input window. Files ending in .mzML are automatically detected and rendered
 below. Clicking on a file name will "stage" it for loading, and multiple files can
 be loaded simultaneously this way.
+
+![Screen as files are loading](Loadscreen.png)
 
 Once the files render, click around the upper plot or enter a new mass in the sidebar.
 If a given file includes MSMS data, points on the upper plot will appear on the 
