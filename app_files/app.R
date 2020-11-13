@@ -11,8 +11,6 @@ library(xml2)
 library(base64enc)
 source("app_files/RaMS_custom.R")
 
-browseURL("http://127.0.0.1:1313/")
-
 #Debugging things
 # input <- list(mz=118.0865, ppm=5, directory=r"(G:\My Drive\FalkorFactor\mzMLs\pos\MSMS)")
 # files_to_load <- function()c("G:\\My Drive\\FalkorFactor\\mzMLs\\pos\\MSMS/180205_Poo_TruePooPos_dda1.mzML",
@@ -33,6 +31,8 @@ browseURL("http://127.0.0.1:1313/")
 # UI ----
 
 ui <- fluidPage(
+  # theme = "app_files/sandstone.mod.css",
+  tags$head(includeCSS("app_files/sandstone.mod.css")),
   sidebarLayout(
     sidebarPanel(
       numericInput(inputId = "mz", label = "Enter a mass of interest:", value = 118.0865),
@@ -56,8 +56,7 @@ ui <- fluidPage(
       style="margin-top: 20px;"
     )
   ),
-  includeScript("app_files/detect_click.js"),
-  theme = "app_files/sandstone.mod.css"
+  includeScript("app_files/detect_click.js")
 )
 
 
@@ -105,6 +104,7 @@ server <- function(input, output, session){
   })
   
   output$MS1_chrom <- renderPlotly({
+    print(head(current_MS1_data()))
     if(req(current_MS1_data())){
       EIC <- current_MS1_data()[mz%between%pmppm(input$mz, input$ppm)]
       
@@ -228,4 +228,5 @@ server <- function(input, output, session){
   )
 }
 
+browseURL("http://127.0.0.1:1313/")
 shinyApp(ui = ui, server = server, options = list(port=1313))

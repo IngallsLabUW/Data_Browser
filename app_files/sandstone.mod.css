@@ -16,7 +16,7 @@
   font-weight: 700;
   src: url(../fonts/Roboto_700.ttf) format('truetype');
 }
-.shiny-notification-panel {
+#shiny-notification-panel {
            height: 100px;
            width: 400px;
            position:fixed;
