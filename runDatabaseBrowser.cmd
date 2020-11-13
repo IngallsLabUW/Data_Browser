@@ -1,1 +1,1 @@
-start "" "Rscript.exe" "%~dp0\app.R"
+start "" "Rscript.exe" "%~dp0\app_files\app.R"

@@ -9,7 +9,7 @@ library(plotly)
 library(data.table)
 library(xml2)
 library(base64enc)
-source("RaMS_custom.R")
+source("app_files/RaMS_custom.R")
 
 browseURL("http://127.0.0.1:1313/")
 
