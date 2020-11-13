@@ -12,20 +12,20 @@ library(base64enc)
 source("app_files/RaMS_custom.R")
 
 #Debugging things
-# input <- list(mz=118.0865, ppm=5, directory=r"(G:\My Drive\FalkorFactor\mzMLs\pos\MSMS)")
-# files_to_load <- function()c("G:\\My Drive\\FalkorFactor\\mzMLs\\pos\\MSMS/180205_Poo_TruePooPos_dda1.mzML",
-#                              "G:\\My Drive\\FalkorFactor\\mzMLs\\pos\\MSMS/190715_Poo_TruePooFK180310_DDApos50.mzML")
+input <- list(mz=118.0865, ppm=5, directory=r"(G:\My Drive\FalkorFactor\mzMLs\pos\MSMS)")
+files_to_load <- function()c("G:\\My Drive\\FalkorFactor\\mzMLs\\pos\\MSMS/180205_Poo_TruePooPos_dda1.mzML",
+                             "G:\\My Drive\\FalkorFactor\\mzMLs\\pos\\MSMS/190715_Poo_TruePooFK180310_DDApos50.mzML")
 # files_to_load <- function()c("Z:\1_QEdata\Will\MSMS_mzMLs\200929_Poo_TruePooMortality_DDApos50/mzML")
-# mzml_data <- grabMzmlData(files_to_load()[[1]])
-# clean_filenames <- gsub("\\.mzML$", "", basename(files_to_load()[[1]]))
-# sutom_MS1_data <- cbind(mzml_data[[1]], filename=clean_filenames)
-# sutom_MS2_data <- cbind(mzml_data[[2]], filename=clean_filenames)
-# mzml_data <- grabMzmlData(files_to_load()[[2]])
-# clean_filenames <- gsub("\\.mzML$", "", basename(files_to_load())[[2]])
-# sutom_MS1_data <- rbind(sutom_MS1_data, cbind(mzml_data[[1]], filename=clean_filenames))
-# sutom_MS2_data <- rbind(sutom_MS2_data, cbind(mzml_data[[2]], filename=clean_filenames))
-# current_MS1_data <- function()sutom_MS1_data
-# current_MS2_data <- function()sutom_MS2_data
+mzml_data <- grabMzmlData(files_to_load()[[1]])
+clean_filenames <- gsub("\\.mzML$", "", basename(files_to_load()[[1]]))
+sutom_MS1_data <- cbind(mzml_data[[1]], filename=clean_filenames)
+sutom_MS2_data <- cbind(mzml_data[[2]], filename=clean_filenames)
+mzml_data <- grabMzmlData(files_to_load()[[2]])
+clean_filenames <- gsub("\\.mzML$", "", basename(files_to_load())[[2]])
+sutom_MS1_data <- rbind(sutom_MS1_data, cbind(mzml_data[[1]], filename=clean_filenames))
+sutom_MS2_data <- rbind(sutom_MS2_data, cbind(mzml_data[[2]], filename=clean_filenames))
+current_MS1_data <- function()sutom_MS1_data
+current_MS2_data <- function()sutom_MS2_data
 
 
 # UI ----
@@ -104,8 +104,8 @@ server <- function(input, output, session){
   })
   
   output$MS1_chrom <- renderPlotly({
-    print(head(current_MS1_data()))
-    if(req(current_MS1_data())){
+    req(current_MS1_data())
+    if(nrow(current_MS1_data())){
       EIC <- current_MS1_data()[mz%between%pmppm(input$mz, input$ppm)]
       
       MS2_scans <- current_MS2_data()[premz%between%pmppm(input$mz, input$ppm)]
@@ -142,8 +142,13 @@ server <- function(input, output, session){
     }
   })
   
+  relayout_data <- reactive({
+    req(input$loadem)
+    event_data(event = "plotly_click", source = "MS1")
+  })
+  
   output$MS2_chrom <- renderPlotly({
-    selected_scan <- event_data(event = "plotly_click", source = "MS1")$x
+    selected_scan <- relayout_data()$x
     req(selected_scan)
     
     mass_MS2_data <- current_MS2_data()[premz%between%pmppm(input$mz, input$ppm)]
