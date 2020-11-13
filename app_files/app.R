@@ -5,13 +5,14 @@
 
 library(shiny)
 library(shinyDirectoryInput)
-library(shinythemes)
 library(plotly)
 library(data.table)
 library(xml2)
 library(base64enc)
 source("RaMS_custom.R")
-R
+
+browseURL("http://127.0.0.1:1313/")
+
 #Debugging things
 # input <- list(mz=118.0865, ppm=5, directory=r"(G:\My Drive\FalkorFactor\mzMLs\pos\MSMS)")
 # files_to_load <- function()c("G:\\My Drive\\FalkorFactor\\mzMLs\\pos\\MSMS/180205_Poo_TruePooPos_dda1.mzML",
@@ -56,7 +57,7 @@ ui <- fluidPage(
     )
   ),
   includeScript("detect_click.js"),
-  theme = "sandstone.mod.css"
+  theme = "www/sandstone.mod.css"
 )
 
 
@@ -227,4 +228,4 @@ server <- function(input, output, session){
   )
 }
 
-shinyApp(ui = ui, server = server)
+shinyApp(ui = ui, server = server, options = list(port=1313))
