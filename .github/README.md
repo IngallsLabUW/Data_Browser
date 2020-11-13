@@ -39,7 +39,9 @@ Also, `shinyDirectoryInput` requires Powershell 3.0 or newer.
 ## Usage
 The app can be launched on Windows simply by double-clicking the "runDataBrowser.cmd"
 command. This should initialize both an R script in the background and a browser
-window to interact with the app. Support for Mac and Linux upcoming shortly.
+window to interact with the app. The default port is localhost:1313, but this
+can be changed within the `shinyApp()` options to another if necessary.
+Support for Mac and Linux upcoming shortly.
 
 ![Screen showing Rscript](Rscreen.png)
 
