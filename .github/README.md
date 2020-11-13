@@ -41,6 +41,8 @@ The app can be launched on Windows simply by double-clicking the "runDataBrowser
 command. This should initialize both an R script in the background and a browser
 window to interact with the app. Support for Mac and Linux upcoming shortly.
 
+![Screen as files are loading](Loadscreen.png)
+
 First, locate the mzML files of interest by clicking on the "..." button of the
 directory input window. Files ending in .mzML are automatically detected and rendered
 below. Clicking on a file name will "stage" it for loading, and multiple files can
@@ -50,6 +52,8 @@ Once the files render, click around the upper plot or enter a new mass in the si
 If a given file includes MSMS data, points on the upper plot will appear on the 
 chromatogram and clicking on those will render the lower plot of fragments collected
 near that scan.
+
+![Screen after files are loaded](Finscreen.png)
 
 Additional files can be added at any time in the same way, and Plotly should
 assign them new colors. The legends in Plotly charts are also interactive - click
