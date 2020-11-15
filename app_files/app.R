@@ -28,11 +28,15 @@ source("app_files/RaMS_custom.R")
 # current_MS1_data <- function()sutom_MS1_data
 # current_MS2_data <- function()sutom_MS2_data
 
+# files_to_load <- function()r"(Z:\1_QEdata\LTC\DATA\HILIC\190718_DepthProfiles_FK180310\MSMS\190715_Poo_TruePooFK180310_DDAneg50.mzXML)"
+# mzxml_data <- grabMzxmlData(files_to_load())
+# current_MS1_data <- function()mzxml_data[[1]]
+# current_MS2_data <- function()mzxml_data[[2]]
 
 # UI ----
 
 ui <- fluidPage(
-  # Include CSS so it looks pretty
+  # Include custom CSS so it looks pretty
   tags$head(includeCSS("app_files/sandstone.mod.css")),
   
   # Default sidebar layout
@@ -97,7 +101,7 @@ server <- function(input, output, session){
     # I've chosen to retain the full paths in the files_to_load and files_loaded
     # variables to avoid sloppy paste()s but it does mean I use a lot of 
     # basename() to get just the important part.
-    mzml_paths <- list.files(dir, pattern = ".mzML", full.names = TRUE)
+    mzml_paths <- list.files(dir, pattern = ".mzML|.mzXML", full.names = TRUE)
     if(!length(files_to_load())){
       mzml_files <- basename(mzml_paths)
     } else {
@@ -146,6 +150,9 @@ server <- function(input, output, session){
     # an upper and lower mass bound, and data.table's between()
     # does a binary search to locate the relevant data points.
     EIC <- current_MS1_data()[mz%between%pmppm(input$mz, input$ppm)]
+    if(!nrow(EIC)){
+      return(plot_ly(x=1, y=1, text="No data found :/", type = "scatter", mode="text"))
+    }
     
     # Create the plotly, with x=retention time, y=intensity, and color by file
     p <- plot_ly(source="MS1") %>%
@@ -268,14 +275,22 @@ server <- function(input, output, session){
     withProgress({
       for(i in seq_along(files_to_load())){
         setProgress(value = (i-1)/n_files, detail = basename(files_to_load()[[i]]))
-        mzml_data <- grabMzmlData(files_to_load()[[i]])
+        if(grepl("mzML", files_to_load()[[i]])){
+          mzml_data <- grabMzmlData(files_to_load()[[i]])
+        } else if(grepl("mzXML", files_to_load()[[i]])) {
+          mzml_data <- grabMzxmlData(files_to_load()[[i]])
+        } else {
+          print(files_to_load()[[i]])
+          print("How on earth did you sneak a non-mz(X)ML file in here?")
+          req(FALSE)
+        }
         new_MS1_data[[i]] <- mzml_data[[1]]
         new_MS2_data[[i]] <- mzml_data[[2]]
       }
       setProgress(value = n_files, detail = "Done!")
     }, message = "Loading your data...", value = 0)
 
-    clean_filenames <- gsub("\\.mzML$", "", basename(files_to_load()))
+    clean_filenames <- gsub("\\.mzML|\\.mzXML$", "", basename(files_to_load()))
     
     # Add filenames to new data and clean up a little
     new_MS1_data <- mapply(cbind, new_MS1_data, clean_filenames, SIMPLIFY = FALSE)
