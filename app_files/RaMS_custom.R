@@ -1,6 +1,7 @@
-# filename <- "G:\\My Drive\\FalkorFactor\\mzMLs\\pos\\MSMS\\190715_Poo_TruePooFK180310_DDApos20.mzML"
+# filename <- "G:\\My Drive\\FalkorFactor\\mzMLs\\pos\\MSMS\\190715_Poo_TruePooFK180310_DDApos50.mzML"
 # filename <- "G:\\My Drive\\FalkorFactor\\mzMLs\\pos\\MSMS\\180205_Poo_TruePooPos_dda3.mzML"
-filename <- r"(Z:\1_QEdata\LTC\DATA\HILIC\200821_Hannah_Ant18\positive\200821_Poo_TruePooAnt18_DDApos50.mzXML)"
+# filename <- r"(Z:\1_QEdata\LTC\DATA\HILIC\200821_Hannah_Ant18\positive\200821_Poo_TruePooAnt18_DDApos50.mzXML)"
+# filename <- r"(Z:\1_QEdata\LTC\DATA\HILIC\190718_DepthProfiles_FK180310\MSMS\190715_Poo_TruePooFK180310_DDApos50.mzXML)"
 
 
 # mzML things ----
@@ -137,7 +138,7 @@ grabMzxmlData <- function(filename){
     rtpremzint_mat <- do.call(what=rbind, mapply(FUN = cbind, rt_vals, premz_vals, 
                                                  mz_int_vals, volt_vals))
     ms2_data <- as.data.table(rtpremzint_mat)
-    names(ms2_data) <- c("rt", "premz", "mz", "int", "voltage")
+    names(ms2_data) <- c("rt", "premz", "fragmz", "int", "voltage")
   } else {
     ms2_data <- NULL
   }
@@ -170,5 +171,5 @@ grabMzxmlSpectraPremz <- function(xml_nodes){
 }
 
 grabMzxmlSpectraVolts <- function(xml_nodes){
-  as.numeric(xml2::xml_attr(ms2_nodes, 'collisionEnergy'))
+  as.numeric(xml2::xml_attr(xml_nodes, 'collisionEnergy'))
 }
