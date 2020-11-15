@@ -1,7 +1,9 @@
 # filename <- "G:\\My Drive\\FalkorFactor\\mzMLs\\pos\\MSMS\\190715_Poo_TruePooFK180310_DDApos20.mzML"
 # filename <- "G:\\My Drive\\FalkorFactor\\mzMLs\\pos\\MSMS\\180205_Poo_TruePooPos_dda3.mzML"
+filename <- r"(Z:\1_QEdata\LTC\DATA\HILIC\200821_Hannah_Ant18\positive\200821_Poo_TruePooAnt18_DDApos50.mzXML)"
 
 
+# mzML things ----
 grabMzmlMetadata <- function(xml_data){
   compr_xpath <- paste0('//d1:cvParam[@accession="MS:1000574"]|',
                         '//d1:cvParam[@accession="MS:1000576"]')
@@ -106,3 +108,67 @@ grabSpectraInt <- function(xml_nodes, file_metadata){
   })
 }
 
+
+
+# mzXML things ----
+
+grabMzxmlData <- function(filename){
+  xml_data <- xml2::read_xml(filename)
+  
+  ms1_nodes <- xml2::xml_find_all(
+    xml_data, '//d1:scan[@msLevel="1"]'
+  )
+  
+  rt_vals <- grabMzxmlSpectraRt(ms1_nodes)/60
+  mz_int_vals <- grabMzxmlSpectraMzInt(ms1_nodes)
+  rtmzint_mat <- do.call(what=rbind, mapply(FUN = cbind, rt_vals, mz_int_vals))
+  ms1_data <- as.data.table(rtmzint_mat)
+  names(ms1_data) <- c("rt", "mz", "int")
+  
+  
+  ms2_nodes <- xml2::xml_find_all(
+    xml_data, '//d1:scan[@msLevel="2"]'
+  )
+  if(length(ms2_nodes)){
+    rt_vals <- grabMzxmlSpectraRt(ms2_nodes)/60
+    premz_vals <- grabMzxmlSpectraPremz(ms2_nodes)
+    volt_vals <- grabMzxmlSpectraVolts(ms2_nodes)
+    mz_int_vals <- grabMzxmlSpectraMzInt(ms2_nodes)
+    rtpremzint_mat <- do.call(what=rbind, mapply(FUN = cbind, rt_vals, premz_vals, 
+                                                 mz_int_vals, volt_vals))
+    ms2_data <- as.data.table(rtpremzint_mat)
+    names(ms2_data) <- c("rt", "premz", "mz", "int", "voltage")
+  } else {
+    ms2_data <- NULL
+  }
+  
+  list(ms1_data, ms2_data)
+}
+
+grabMzxmlSpectraRt <- function(xml_nodes){
+  as.numeric(gsub("PT|S", "", xml2::xml_attr(xml_nodes, "retentionTime")))
+}
+
+grabMzxmlSpectraMzInt <- function(xml_nodes){
+  peak_nodes <- xml2::xml_find_all(xml_nodes, "d1:peaks")
+  precision <- unique(as.numeric(xml2::xml_attr(peak_nodes, "precision")))
+  compr_type <- unique(xml2::xml_attr(peak_nodes, "compressionType"))
+  data_array <- xml2::xml_text(peak_nodes)
+  lapply(data_array, function(binary){
+    decoded_binary <- base64enc::base64decode(binary)
+    raw_binary <- as.raw(decoded_binary)
+    decomp_binary <- memDecompress(raw_binary, type = compr_type)
+    final_binary <- readBin(decomp_binary, what = "double",
+                            n=length(decomp_binary),
+                            size = precision/8, endian = "big")
+    matrix(final_binary, ncol = 2, byrow = TRUE)
+  })
+}
+
+grabMzxmlSpectraPremz <- function(xml_nodes){
+  as.numeric(xml2::xml_text(xml2::xml_find_all(xml_nodes, "d1:precursorMz")))
+}
+
+grabMzxmlSpectraVolts <- function(xml_nodes){
+  as.numeric(xml2::xml_attr(ms2_nodes, 'collisionEnergy'))
+}
