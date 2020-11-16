@@ -3,6 +3,39 @@
 
 # Setup things ----
 
+reqd_packages <- c("shiny", "shinyDirectoryInput", "plotly", "devtools",
+                   "data.table", "xml2", "base64enc")
+missing_packages <- !reqd_packages%in%installed.packages()[,"Package"]
+if(any(missing_packages)){
+  message("Whoops! Looks like not all required packages are installed.")
+  message(paste("Packages missing: ", paste(
+    reqd_packages[missing_packages], collapse = ", ")
+  ))
+  message("I can try to install them for you, or you can do it yourself.")
+  message("1: Install them for you\n2: Do it yourself")
+  choice <- "neither"
+  while(!choice%in%c("1", "2")){
+    choice <- readline(prompt = "Choose 1 or 2 by entering that number here: ")
+  }
+  if(choice=="1"){
+    message("Okay, I'll try to install them.")
+    message(paste("Installing packages:", paste(
+      reqd_packages[missing_packages], collapse = ", ")
+    ))
+    cran_to_install <- setdiff(reqd_packages[missing_packages], "shinyDirectoryInput")
+    if(length(cran_to_install))install.packages(cran_to_install)
+    if(missing_packages[2]){
+      devtools::install_github('wleepang/shiny-directory-input')
+    }
+  } else if (choice=="2"){
+    message("Okay, I'll let you do it yourself. Press Enter to exit.")
+    readline()
+  } else {
+    message("How on earth did you do that?")
+    readline()
+  }
+}
+
 library(shiny)
 library(shinyDirectoryInput)
 library(plotly)
