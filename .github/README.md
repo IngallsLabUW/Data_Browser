@@ -18,8 +18,7 @@ Loading the files into R is the slowest part of this process, but at a few secon
 much faster than the typical `readMSdata` used by `xcms` or `MSnbase`. This is done via a custom
 XML parser written around Hadley's `xml2` library that also has the memory advantage of using external
 pointers until the data itself is needed. Switching between masses should be super fast thanks to `data.table`'s
-subsetting and binary search. While there's currently no support for mzXML files, this is a top
-priority for future development.
+subsetting and binary search. 
 
 ## Requirements
 Several R libraries are required, but none of which should be difficult to install.
@@ -29,6 +28,11 @@ Several R libraries are required, but none of which should be difficult to insta
   - data.table (for super-fast indexing)
   - xml2 (for parsing the mzML file)
   - base64enc (for parsing *m/z* and intensity data encoded as binary arrays)
+
+The app makes a brief check that these libraries are installed and has a small script to walk the user
+through the process if they're not found, but it's probably easiest to install them yourself if they're
+missing. `shinyDirectoryInput` is not currently on CRAN and must instead be 
+[installed from Github](https://github.com/wleepang/shiny-directory-input).
 
 Additionally, this app sources the custom script file "RaMS_custom.R" which
 borrows several functions from the upcoming `RaMS` package and optimizes
