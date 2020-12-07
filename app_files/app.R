@@ -3,8 +3,7 @@
 
 # Setup things ----
 
-reqd_packages <- c("shiny", "shinyDirectoryInput", "plotly", "devtools",
-                   "data.table", "xml2", "base64enc")
+reqd_packages <- c("shiny", "plotly", "devtools", "data.table", "RaMS")
 missing_packages <- !reqd_packages%in%installed.packages()[,"Package"]
 if(any(missing_packages)){
   message("Whoops! Looks like not all required packages are installed.")
@@ -15,17 +14,19 @@ if(any(missing_packages)){
   message("1: Install them for you\n2: Do it yourself")
   choice <- "neither"
   while(!choice%in%c("1", "2")){
-    choice <- readline(prompt = "Choose 1 or 2 by entering that number here: ")
+    message("Choose 1 or 2 by entering that number here: ")
+    choice <- readLines(con = "stdin", n = 1)
   }
   if(choice=="1"){
     message("Okay, I'll try to install them.")
     message(paste("Installing packages:", paste(
       reqd_packages[missing_packages], collapse = ", ")
     ))
-    cran_to_install <- setdiff(reqd_packages[missing_packages], "shinyDirectoryInput")
-    if(length(cran_to_install))install.packages(cran_to_install)
-    if(missing_packages[2]){
-      devtools::install_github('wleepang/shiny-directory-input')
+    cran_to_install <- setdiff(reqd_packages[missing_packages], 
+                               c("RaMS"))
+    if(length(cran_to_install)>0)install.packages(cran_to_install)
+    if(missing_packages[5]){
+      devtools::install_github('wkumler/RaMS')
     }
   } else if (choice=="2"){
     message("Okay, I'll let you do it yourself. Press Enter to exit.")
@@ -37,34 +38,16 @@ if(any(missing_packages)){
 }
 
 library(shiny)
-library(shinyDirectoryInput)
 library(plotly)
 library(data.table)
-library(xml2)
-library(base64enc)
-source("app_files/RaMS_custom.R")
+library(RaMS)
+
+metadata <- read.csv("metadata.csv")
 
 # Debugging things ----
 # input <- list(mz=118.0865, ppm=5, directory=r"(G:\My Drive\FalkorFactor\mzMLs\pos\MSMS)")
 # files_to_load <- function()c("G:\\My Drive\\FalkorFactor\\mzMLs\\pos\\MSMS/180205_Poo_TruePooPos_dda1.mzML",
 #                              "G:\\My Drive\\FalkorFactor\\mzMLs\\pos\\MSMS/190715_Poo_TruePooFK180310_DDApos50.mzML")
-# files_to_load <- function()c("Z:\1_QEdata\Will\MSMS_mzMLs\200929_Poo_TruePooMortality_DDApos50/mzML")
-# files_to_load <- function()"G:\\My Drive\\FalkorFactor\\mzMLs\\pos\\190715_Poo_TruePooFK180310_Half1.mzML"
-# mzml_data <- grabMzmlData(files_to_load()[[1]])
-# clean_filenames <- gsub("\\.mzML$", "", basename(files_to_load()[[1]]))
-# sutom_MS1_data <- cbind(mzml_data[[1]], filename=clean_filenames)
-# sutom_MS2_data <- cbind(mzml_data[[2]], filename=clean_filenames)
-# mzml_data <- grabMzmlData(files_to_load()[[2]])
-# clean_filenames <- gsub("\\.mzML$", "", basename(files_to_load())[[2]])
-# sutom_MS1_data <- rbind(sutom_MS1_data, cbind(mzml_data[[1]], filename=clean_filenames))
-# sutom_MS2_data <- rbind(sutom_MS2_data, cbind(mzml_data[[2]], filename=clean_filenames))
-# current_MS1_data <- function()sutom_MS1_data
-# current_MS2_data <- function()sutom_MS2_data
-
-# files_to_load <- function()r"(Z:\1_QEdata\LTC\DATA\HILIC\190718_DepthProfiles_FK180310\MSMS\190715_Poo_TruePooFK180310_DDAneg50.mzXML)"
-# mzxml_data <- grabMzxmlData(files_to_load())
-# current_MS1_data <- function()mzxml_data[[1]]
-# current_MS2_data <- function()mzxml_data[[2]]
 
 # UI ----
 
@@ -77,19 +60,16 @@ ui <- fluidPage(
     sidebarPanel(
       numericInput(inputId = "mz", label = "Enter a mass of interest:", value = 118.0865),
       numericInput(inputId = "ppm", label = "Enter instrument ppm:", value = 5),
-      directoryInput('directory', label = "Choose a directory", 
-                     value = "~"),
       br(),
       strong("Files to load:"),
       tableOutput("files_to_load"),
       actionButton(inputId = "loadem", label = "Load selected files"),
-      br(),
-      br(),
-      strong("Files found:"),
-      tableOutput("found_files"),
-      style="margin-top: 20px;"
+      style="margin-top: 20px; position: fixed;", 
+      width = 3
     ),
     mainPanel(
+      strong("Choose files:"),
+      dataTableOutput("found_files"),
       plotlyOutput("MS1_chrom", height="300px"),
       plotlyOutput("MS2_chrom", height="300px"),
       style="margin-top: 20px;"
@@ -125,26 +105,15 @@ server <- function(input, output, session){
   current_MS1_data <- reactiveVal()
   current_MS2_data <- reactiveVal()
   
-  # Render the table of mzML files that are found in the given directory
-  output$found_files <- renderTable({
-    # This function is from shinyDirectoryInput and returns a file path
-    dir <- readDirectoryInput(session, 'directory')
+  output$found_files <- renderDataTable({
+    files <- data.frame(File.name=gsub(".mzML.*", "", list.files("MSMS files")))
     
-    # Find all the .mzML files and collect their full paths
-    # I've chosen to retain the full paths in the files_to_load and files_loaded
-    # variables to avoid sloppy paste()s but it does mean I use a lot of 
-    # basename() to get just the important part.
-    mzml_paths <- list.files(dir, pattern = ".mzML|.mzXML", full.names = TRUE)
-    if(!length(files_to_load())){
-      mzml_files <- basename(mzml_paths)
-    } else {
-      # If files have already been staged, remove them from the full list
-      mzml_files <- setdiff(basename(mzml_paths), basename(files_to_load()))
-    }
-    if(length(files_loaded())){
-      # If files have already been loaded, remove them from the full list
-      mzml_files <- setdiff(mzml_files, basename(files_loaded()))
-    }
+    files <- files[!files$File.name%in%c(files_to_load(), files_loaded()),
+                   ,drop=FALSE]
+    
+    mzml_files <- merge(files, metadata, by = "File.name")[
+      c("File.name", setdiff(names(metadata)[-ncol(metadata)], "File.path"))
+    ]
     
     if(!length(mzml_files)){
       #Handle cases when no mzML files are found in the directory
@@ -154,13 +123,16 @@ server <- function(input, output, session){
     # Combine file names with HTML hyperlink text that activates the
     # detect_click javascript
     linked_names <- paste0("<a href='#' onclick='detect_click(this)'>",
-                         mzml_files, "</a>")
+                           mzml_files$File.name, "</a>")
+    mzml_files$File.name <- linked_names
     
-    # Remove column names so the output looks pretty
-    `colnames<-`(data.frame(linked_names), NULL)
-    
-    # Fake sanitize the text so the raw HTML <a> tags don't get escaped
-  }, sanitize.text.function = function(x) x)
+    mzml_files
+  }, escape = FALSE, options = list(
+    scrollX = TRUE, 
+    pageLength = 3,
+    lengthMenu=list(c(3, 12, -1), 
+                    c('3', '12', 'All')))
+  )
   
   # Render the "staged" files area
   output$files_to_load <- renderTable({
@@ -291,77 +263,37 @@ server <- function(input, output, session){
   # When text is clicked, move it into the "files to load" object and paste
   # the current directory name to it
   observeEvent(input$clicked_text, {
-    files_to_load(c(files_to_load(), paste(readDirectoryInput(session, 'directory'), 
-                                           input$clicked_text, sep = "/")))
+    files_to_load(c(files_to_load(), input$clicked_text))
   })
   
   # Observe file load button
   # When clicked, load the files which are currently in files_to_load
   # Use a Shiny-specific withProgress bar
-  # grabMzmlData is the magical function here - check out the RaMS_custom.R
-  # script for details or ask Will
   observeEvent(input$loadem, {
     req(files_to_load())
+    filepaths <- paste0("MSMS files/", files_to_load(), ".mzML.gz")
     new_MS1_data <- list()
     new_MS2_data <- list()
-    n_files <- length(files_to_load())
+    n_files <- length(filepaths)
     withProgress({
       for(i in seq_along(files_to_load())){
         setProgress(value = (i-1)/n_files, detail = basename(files_to_load()[[i]]))
-        if(grepl("mzML", files_to_load()[[i]])){
-          mzml_data <- grabMzmlData(files_to_load()[[i]])
-        } else if(grepl("mzXML", files_to_load()[[i]])) {
-          mzml_data <- grabMzxmlData(files_to_load()[[i]])
-        } else {
-          print(files_to_load()[[i]])
-          print("How on earth did you sneak a non-mz(X)ML file in here?")
-          req(FALSE)
-        }
-        new_MS1_data[[i]] <- mzml_data[[1]]
-        new_MS2_data[[i]] <- mzml_data[[2]]
+        mzml_data <- grabMSdata(filepaths[[i]], grab_what = c("MS1", "MS2"))
+        current_MS1_data(rbind(current_MS1_data(), mzml_data$MS1))
+        current_MS2_data(rbind(current_MS2_data(), mzml_data$MS2))
       }
       setProgress(value = n_files, detail = "Done!")
     }, message = "Loading your data...", value = 0)
 
     clean_filenames <- gsub("\\.mzML|\\.mzXML$", "", basename(files_to_load()))
     
-    # Add filenames to new data and clean up a little
-    new_MS1_data <- mapply(cbind, new_MS1_data, clean_filenames, SIMPLIFY = FALSE)
-    new_MS1_data <- do.call(what = rbind, new_MS1_data)
-    new_MS1_data <- `colnames<-`(new_MS1_data, c("rt", "mz", "int", "filename"))
-    if(!is.null(new_MS2_data)){
-      new_MS2_data <- mapply(cbind, new_MS2_data, clean_filenames, SIMPLIFY = FALSE)
-      new_MS2_data <- do.call(what = rbind, new_MS2_data)
-      new_MS2_data <- `colnames<-`(new_MS2_data, c("rt", "premz", "fragmz", "int", 
-                                                   "voltage", "filename"))
-    }
-    
     # Combine any existing MS1 and MS2 data with the new data
-    current_MS1_data(rbind(current_MS1_data(), new_MS1_data))
-    current_MS2_data(rbind(current_MS2_data(), new_MS2_data))
+    # current_MS2_data(rbind(current_MS2_data(), new_MS2_data[[1]]))
     
     # Add files_to_load to files_loaded and clear out files_to_load
     files_loaded(c(files_loaded(), files_to_load()))
     files_to_load(NULL)
   })
-  
-  #Observe triple button click
-  # Magic code, no idea how this works - directly from shinyDirectoryInput vignette
-  observeEvent(
-    ignoreNULL = TRUE,
-    eventExpr = {
-      input$directory
-    },
-    handlerExpr = {
-      if (input$directory > 0) {
-        # launch the directory selection dialog with initial path read from the widget
-        path = choose.dir(default = readDirectoryInput(session, 'directory'))
-        
-        # update the widget value
-        updateDirectoryInput(session, 'directory', value = path)
-      }
-    }
-  )
 }
 
 

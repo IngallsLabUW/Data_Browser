@@ -1,0 +1,76 @@
+﻿Project name,Sample type,Location,Species,Sample specifics,Fraction,Column,Polarity,Sample collection date,Data acquisition date,Fragmentation energy,File path,File name
+Falkor,Environmental,Station ALOHA,NA,"Anticyclonic/Cyclonic Eddy, 25m and DCM",Aq,HILIC,Pos,180310,190715,20,Z:\1_QEdata\LTC\DATA\HILIC\190718_DepthProfiles_FK180310\MSMS,190715_Poo_TruePooFK180310_DDApos20
+Falkor,Environmental,Station ALOHA,NA,"Anticyclonic/Cyclonic Eddy, 25m and DCM",Aq,HILIC,Pos,180310,190715,35,Z:\1_QEdata\LTC\DATA\HILIC\190718_DepthProfiles_FK180310\MSMS,190715_Poo_TruePooFK180310_DDApos35
+Falkor,Environmental,Station ALOHA,NA,"Anticyclonic/Cyclonic Eddy, 25m and DCM",Aq,HILIC,Pos,180310,190715,50,Z:\1_QEdata\LTC\DATA\HILIC\190718_DepthProfiles_FK180310\MSMS,190715_Poo_TruePooFK180310_DDApos50
+Falkor,Environmental,Station ALOHA,NA,"Anticyclonic/Cyclonic Eddy, 25m and DCM",Aq,HILIC,Pos,180310,200709,100,Z:\1_QEdata\LTC\DATA\HILIC\200709_Will_MSMS-Tests,200709_Poo_TruePooFK180310_DDApos100
+Falkor,Environmental,Station ALOHA,NA,"Anticyclonic/Cyclonic Eddy, 25m and DCM",Aq,HILIC,Neg,180310,190715,20,Z:\1_QEdata\LTC\DATA\HILIC\190718_DepthProfiles_FK180310\MSMS,190715_Poo_TruePooFK180310_DDAneg20
+Falkor,Environmental,Station ALOHA,NA,"Anticyclonic/Cyclonic Eddy, 25m and DCM",Aq,HILIC,Neg,180310,190715,35,Z:\1_QEdata\LTC\DATA\HILIC\190718_DepthProfiles_FK180310\MSMS,190715_Poo_TruePooFK180310_DDAneg35
+Falkor,Environmental,Station ALOHA,NA,"Anticyclonic/Cyclonic Eddy, 25m and DCM",Aq,HILIC,Neg,180310,190715,50,Z:\1_QEdata\LTC\DATA\HILIC\190718_DepthProfiles_FK180310\MSMS,190715_Poo_TruePooFK180310_DDAneg50
+Falkor,Environmental,Station ALOHA,NA,"Anticyclonic/Cyclonic Eddy, 25m and DCM",Aq,CYANO,Pos,180310,190730,20,Z:\1_QEdata\LTC\DATA\CYANO\190730_DepthProfiles_FK180310,190725_Poo_TruePooFK180310_DDApos20
+Falkor,Environmental,Station ALOHA,NA,"Anticyclonic/Cyclonic Eddy, 25m and DCM",Aq,CYANO,Pos,180310,190730,35,Z:\1_QEdata\LTC\DATA\CYANO\190730_DepthProfiles_FK180310,190725_Poo_TruePooFK180310_DDApos35
+Falkor,Environmental,Station ALOHA,NA,"Anticyclonic/Cyclonic Eddy, 25m and DCM",Aq,CYANO,Pos,180310,190730,50,Z:\1_QEdata\LTC\DATA\CYANO\190730_DepthProfiles_FK180310,190725_Poo_TruePooFK180310_DDApos50
+,,,,,,,,,,,,
+Gradients 3,Environmental,NPTZ,NA,Depth profiles,Aq,HILIC,Pos,April of 2019,190715,20,Z:\1_QEdata\LTC\DATA\HILIC\190715_DepthProfiles_KM1906\MSMS,190715_Poo_TruePooKM1906_DDApos20
+Gradients 3,Environmental,NPTZ,NA,Depth profiles,Aq,HILIC,Pos,April of 2019,190715,35,Z:\1_QEdata\LTC\DATA\HILIC\190715_DepthProfiles_KM1906\MSMS,190715_Poo_TruePooKM1906_DDApos35
+Gradients 3,Environmental,NPTZ,NA,Depth profiles,Aq,HILIC,Pos,April of 2019,190715,50,Z:\1_QEdata\LTC\DATA\HILIC\190715_DepthProfiles_KM1906\MSMS,190715_Poo_TruePooKM1906_DDApos50
+Gradients 3,Environmental,NPTZ,NA,Depth profiles,Aq,HILIC,Neg,April of 2019,190715,20,Z:\1_QEdata\LTC\DATA\HILIC\190715_DepthProfiles_KM1906\MSMS,190715_Poo_TruePooKM1906_DDAneg20
+Gradients 3,Environmental,NPTZ,NA,Depth profiles,Aq,HILIC,Neg,April of 2019,190715,35,Z:\1_QEdata\LTC\DATA\HILIC\190715_DepthProfiles_KM1906\MSMS,190715_Poo_TruePooKM1906_DDAneg35
+Gradients 3,Environmental,NPTZ,NA,Depth profiles,Aq,HILIC,Neg,April of 2019,190715,50,Z:\1_QEdata\LTC\DATA\HILIC\190715_DepthProfiles_KM1906\MSMS,190715_Poo_TruePooKM1906_DDAneg50
+,Environmental,Station Aloha?,NA,,Aq,HILIC,Pos,June of 2019?,190715,20,Z:\1_QEdata\LTC\DATA\HILIC\190722_DepthProfiles_KM1910\MSMS,190715_Poo_TruePooKM1910_DDApos20
+,Environmental,,NA,,Aq,HILIC,Pos,June of 2019?,190715,35,Z:\1_QEdata\LTC\DATA\HILIC\190722_DepthProfiles_KM1910\MSMS,190715_Poo_TruePooKM1910_DDApos20
+,Environmental,,NA,,Aq,HILIC,Pos,June of 2019?,190715,50,Z:\1_QEdata\LTC\DATA\HILIC\190722_DepthProfiles_KM1910\MSMS,190715_Poo_TruePooKM1910_DDApos20
+,Environmental,,NA,,Aq,HILIC,Neg,June of 2019?,190715,20,Z:\1_QEdata\LTC\DATA\HILIC\190722_DepthProfiles_KM1910\MSMS,190715_Poo_TruePooKM1910_DDAneg20
+,Environmental,,NA,,Aq,HILIC,Neg,June of 2019?,190715,35,Z:\1_QEdata\LTC\DATA\HILIC\190722_DepthProfiles_KM1910\MSMS,190715_Poo_TruePooKM1910_DDAneg35
+,Environmental,,NA,,Aq,HILIC,Neg,June of 2019?,190715,50,Z:\1_QEdata\LTC\DATA\HILIC\190722_DepthProfiles_KM1910\MSMS,190715_Poo_TruePooKM1910_DDAneg50
+Gradients 3,Environmental,NPTZ,NA,,Aq,CYANO,Pos,April of 2019,190729,20,Z:\1_QEdata\LTC\DATA\CYANO\190729_DepthProfiles_KM1906,190725_Poo_TruePooKM1906_DDApos20
+Gradients 3,Environmental,NPTZ,NA,,Aq,CYANO,Pos,April of 2019,190729,35,Z:\1_QEdata\LTC\DATA\CYANO\190729_DepthProfiles_KM1906,190725_Poo_TruePooKM1906_DDApos35
+Gradients 3,Environmental,NPTZ,NA,,Aq,CYANO,Pos,April of 2019,190729,50,Z:\1_QEdata\LTC\DATA\CYANO\190729_DepthProfiles_KM1906,190725_Poo_TruePooKM1906_DDApos50
+,Environmental,,NA,,Aq,CYANO,Pos,June of 2019?,190801,20,Z:\1_QEdata\LTC\DATA\CYANO\190801_DepthProfiles_KM1910,190725_Poo_TruePooKM1910_DDApos20
+,Environmental,,NA,,Aq,CYANO,Pos,June of 2019?,190801,35,Z:\1_QEdata\LTC\DATA\CYANO\190801_DepthProfiles_KM1910,190725_Poo_TruePooKM1910_DDApos35
+,Environmental,,NA,,Aq,CYANO,Pos,June of 2019?,190801,50,Z:\1_QEdata\LTC\DATA\CYANO\190801_DepthProfiles_KM1910,190725_Poo_TruePooKM1910_DDApos50
+,Environmental,,NA,,Org,C18,Pos,,190801,10,Z:\1_QEdata\LTC\DATA\LIPIDS\190801_DepthProfiles_KM1906_KM1910_Falkor\Converted\mzxml\Pos,190801_Poo_TruePooKM1906-1910-DDA_pos10
+,Environmental,,NA,,Org,C18,Pos,,190801,20,,190801_Poo_TruePooKM1906-1910-DDA_pos20
+,Environmental,,NA,,Org,C18,Pos,,190801,35,,190801_Poo_TruePooKM1906-1910-DDA_pos35
+,Environmental,,NA,,Org,C18,Neg,,190801,10,Z:\1_QEdata\LTC\DATA\LIPIDS\190801_DepthProfiles_KM1906_KM1910_Falkor\Converted\mzxml\Neg,190801_Poo_TruePooKM1906-1910-DDA_neg10
+,Environmental,,NA,,Org,C18,Neg,,190801,20,,190801_Poo_TruePooKM1906-1910-DDA_neg20
+,Environmental,,NA,,Org,C18,Neg,,190801,35,,190801_Poo_TruePooKM1906-1910-DDA_neg35
+,,,,,,,,,,,,
+MESOSCOPE,Environmental,Station ALOHA,NA,Eddy Transect,Aq,HILIC,Pos,Summer 2017,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+MESOSCOPE,Environmental,Station ALOHA,NA,High resolution depth profiles,,,,Summer 2017,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+MESOSCOPE,Experimental,NA,NA,Incubations,Aq,HILIC,Pos,Summer 2017,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+Gradients 1,Environmental,NPTZ,NA,,Aq,HILIC,Pos,,,35,Z:\1_QEdata\LTC\DATA\Projects_2017\HILIC_2017\170417_GradientsCruiseFilters1\positive,170417_Poo_April17AqExtractsDDApos_1
+Gradients 1,Environmental,NPTZ,NA,,Aq,HILIC,Neg,,,35,Z:\1_QEdata\LTC\DATA\Projects_2017\HILIC_2017\170417_GradientsCruiseFilters1\negative,170417_Poo_April17AqExtractsDDAneg_1
+Gradients 1,Environmental,NPTZ,NA,,Aq,HILIC,Pos,,,35,Z:\1_QEdata\LTC\DATA\Projects_2017\HILIC_2017\170417_GradientsCruiseFilters2\positive,170419_Poo_April17AqExtractsDDApos_1
+Gradients 1,Environmental,NPTZ,NA,,Aq,HILIC,Neg,,,35,Z:\1_QEdata\LTC\DATA\Projects_2017\HILIC_2017\170417_GradientsCruiseFilters2\negative,170419_Poo_April17AqExtractsDDAneg_1
+,,,,,,,,,,,,
+Gradients 2,Environmental,NPTZ,NA,,Aq,HILIC,Pos,,,35,Z:\1_QEdata\LTC\DATA\Projects_2017\HILIC_2017\170620_Gradients2.0_CruiseFilters\positive,170621_Poo_PooJune21-23posDDA_1
+Gradients 2,Environmental,NPTZ,NA,,Aq,HILIC,Pos,,,35,,170621_Poo_PooJune21-23posDDA_2
+Gradients 2,Environmental,NPTZ,NA,,Aq,HILIC,Pos,,,35,,170621_Poo_PooJune21-23posDDA_3
+Gradients 2,Environmental,NPTZ,NA,,Aq,HILIC,Neg,,,35,Z:\1_QEdata\LTC\DATA\Projects_2017\HILIC_2017\170620_Gradients2.0_CruiseFilters\negative,170621_Poo_PooJune21-23negDDA_1
+Gradients 2,Environmental,NPTZ,NA,,Aq,HILIC,Neg,,,35,,170621_Poo_PooJune21-23negDDA_2
+Gradients 2,Environmental,NPTZ,NA,,Aq,HILIC,Neg,,,35,,170621_Poo_PooJune21-23negDDA_3
+Gradients 2,Environmental,NPTZ,NA,,Aq,HILIC,Pos,,,35,Z:\1_QEdata\LTC\DATA\Projects_2017\HILIC_2017\170706_Gradients2.0_CruiseFilters_2\positive,170706_Poo_TruePoo_PosDDA1
+Gradients 2,Environmental,NPTZ,NA,,Aq,HILIC,Pos,,,35,,170706_Poo_TruePoo_PosDDA2
+Gradients 2,Environmental,NPTZ,NA,,Aq,HILIC,Pos,,,35,,170706_Poo_TruePoo_PosDDA3
+Gradients 2,Environmental,NPTZ,NA,,Aq,HILIC,Neg,,,35,Z:\1_QEdata\LTC\DATA\Projects_2017\HILIC_2017\170706_Gradients2.0_CruiseFilters_2\negative,170706_Poo_TruePoo_NegDDA1
+Gradients 2,Environmental,NPTZ,NA,,Aq,HILIC,Neg,,,35,,170706_Poo_TruePoo_NegDDA2
+Gradients 2,Environmental,NPTZ,NA,,Aq,HILIC,Neg,,,35,,170706_Poo_TruePoo_NegDDA3
+,,,,,,,,,,,,
+Gradients 2,Experiment,,,,,,,,,,,
+,,,,,,,,,,,,
+Gradients 3,Environmental,NPTZ,NA,,,,,,,,,
+,,,,,,,,,,,,
+Cultured data,Culture,NA,Diatom,,,,,,,,Z:\1_QEdata\LTC\DATA\Projects_2017\HILIC_2017\170821_BrynCultureSamples\positive,
+Cultured data,Culture,NA,Synechococcus,,,,,,,,Z:\1_QEdata\LTC\DATA\Projects_2017\HILIC_2017\170821_BrynCultureSamples\positive,
+,,,,,,,,,,,,
+Diel study,Environmental,,,,,,,,,,,
