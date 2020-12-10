@@ -7,7 +7,7 @@ reqd_packages <- c("shiny", "plotly", "devtools", "data.table", "RaMS")
 missing_packages <- !reqd_packages%in%installed.packages()[,"Package"]
 if(any(missing_packages)){
   message("Whoops! Looks like not all required packages are installed.")
-  message(paste("Packages missing: ", paste(
+  message(paste("Packages missing:", paste(
     reqd_packages[missing_packages], collapse = ", ")
   ))
   message("I can try to install them for you, or you can do it yourself.")
@@ -22,9 +22,9 @@ if(any(missing_packages)){
     message(paste("Installing packages:", paste(
       reqd_packages[missing_packages], collapse = ", ")
     ))
-    cran_to_install <- setdiff(reqd_packages[missing_packages], 
-                               c("RaMS"))
-    if(length(cran_to_install)>0)install.packages(cran_to_install)
+    cran_to_install <- setdiff(reqd_packages[missing_packages], c("RaMS"))
+    if(length(cran_to_install)>0)install.packages(cran_to_install, 
+                                                  repos='https://cran.rstudio.com/')
     if(missing_packages[5]){
       devtools::install_github('wkumler/RaMS')
     }
@@ -42,7 +42,35 @@ library(plotly)
 library(data.table)
 library(RaMS)
 
-metadata <- read.csv("metadata.csv")
+# For interactive purposes
+if(interactive()){
+  wd <- "../"
+} else {
+  wd <- ""
+}
+
+metadata <- fread(paste0(wd, "metadata.csv"))
+names(metadata) <- tolower(gsub(" ", "_", names(metadata)))
+metadata <- metadata[project_name!=""]
+
+stan_data <- fread(paste0(wd, "Ingalls_Lab_Standards_NEW.csv"))
+stan_data <- stan_data[order(z,Fraction1,Compound.Name_figure),
+                       c("Compound.Name_figure", "m.z", "z", "Fraction1")]
+stan_data <- stan_data[!is.na(m.z)]
+stan_data$polarity <- ifelse(stan_data$z==1, "pos", "neg")
+stan_data$split <- paste0(stan_data$Fraction1, " (", stan_data$polarity, ")")
+
+stan_choices <- `names<-`(stan_data$m.z, stan_data$Compound.Name_figure)
+stan_choices <- split(stan_choices, stan_data$split)
+stan_choices <- stan_choices[c("HILICPos (pos)", "HILICNeg (neg)", "CyanoDCM (pos)",
+                               "CyanoAq (pos)", "CyanoAq (neg)")]
+
+files <- data.frame(file_name=gsub(".mzML.*", "", list.files(paste0(wd, "MSMS files"))))
+# files <- files[!files$file_name%in%c(files_to_load(), files_loaded()),,drop=FALSE]
+mzml_files <- merge(files, metadata, by = "file_name")[
+  c("file_name", setdiff(names(metadata), c("file_path", "file_name")))
+]
+
 
 # Debugging things ----
 # input <- list(mz=118.0865, ppm=5, directory=r"(G:\My Drive\FalkorFactor\mzMLs\pos\MSMS)")
@@ -53,13 +81,19 @@ metadata <- read.csv("metadata.csv")
 
 ui <- fluidPage(
   # Include custom CSS so it looks pretty
-  tags$head(includeCSS("app_files/sandstone.mod.css")),
+  tags$head(includeCSS(paste0(wd, "app_files/sandstone.mod.css"))),
   
   # Default sidebar layout
   sidebarLayout(
     sidebarPanel(
+      selectInput(inputId = "stan_mz", label = "Pick a standard:",
+                  choices = stan_choices, multiple = FALSE, selectize = TRUE),
+      p("or"),
       numericInput(inputId = "mz", label = "Enter a mass of interest:", value = 118.0865),
       numericInput(inputId = "ppm", label = "Enter instrument ppm:", value = 5),
+      checkboxGroupInput(inputId = "which_cruises", label = "Which cruises?",
+                         choices = sort(unique(metadata$project_name)),
+                         selected = sort(unique(metadata$project_name))),
       br(),
       strong("Files to load:"),
       tableOutput("files_to_load"),
@@ -68,15 +102,13 @@ ui <- fluidPage(
       width = 3
     ),
     mainPanel(
-      strong("Choose files:"),
-      dataTableOutput("found_files"),
       plotlyOutput("MS1_chrom", height="300px"),
       plotlyOutput("MS2_chrom", height="300px"),
+      strong("Choose files:"),
+      DT::dataTableOutput("found_files"),
       style="margin-top: 20px;"
     )
-  ),
-  # Include the Javascript necessary to detect text clicks
-  includeScript("app_files/detect_click.js")
+  )
 )
 
 
@@ -105,39 +137,29 @@ server <- function(input, output, session){
   current_MS1_data <- reactiveVal()
   current_MS2_data <- reactiveVal()
   
-  output$found_files <- renderDataTable({
-    files <- data.frame(File.name=gsub(".mzML.*", "", list.files("MSMS files")))
-    
-    files <- files[!files$File.name%in%c(files_to_load(), files_loaded()),
-                   ,drop=FALSE]
-    
-    mzml_files <- merge(files, metadata, by = "File.name")[
-      c("File.name", setdiff(names(metadata)[-ncol(metadata)], "File.path"))
-    ]
-    
-    if(!length(mzml_files)){
-      #Handle cases when no mzML files are found in the directory
-      return(data.frame())
-    }
-    
-    # Combine file names with HTML hyperlink text that activates the
-    # detect_click javascript
-    linked_names <- paste0("<a href='#' onclick='detect_click(this)'>",
-                           mzml_files$File.name, "</a>")
-    mzml_files$File.name <- linked_names
-    
+  current_mz <- reactiveVal()
+  
+  observeEvent(input$stan_mz, {
+    current_mz(as.numeric(input$stan_mz))
+  })
+  observeEvent(input$mz, {
+    current_mz(input$mz)
+  })
+  
+  output$found_files <- DT::renderDataTable({
+    mzml_files <- mzml_files[mzml_files$project_name%in%input$which_cruises,]
+    mzml_files <- mzml_files[!mzml_files$file_name%in%files_loaded(),]
     mzml_files
   }, escape = FALSE, options = list(
     scrollX = TRUE, 
-    pageLength = 3,
-    lengthMenu=list(c(3, 12, -1), 
-                    c('3', '12', 'All')))
+    pageLength = 5,
+    lengthMenu=list(c(5, 10, -1), c('5', '10', 'All')))
   )
   
   # Render the "staged" files area
   output$files_to_load <- renderTable({
     if(!length(files_to_load())){
-      f2load <- data.frame()
+      f2load <- data.frame("No files selected")
     } else {
       f2load <- data.frame(basename(files_to_load()))
     }
@@ -145,60 +167,101 @@ server <- function(input, output, session){
     f2load
   })
   
+  # Observe clicked text
+  # When text is clicked, move it into the "files to load" object and paste
+  # the current directory name to it
+  observeEvent(input$found_files_rows_selected, {
+    mzml_files <- mzml_files[mzml_files$project_name%in%input$which_cruises,]
+    mzml_files <- mzml_files[!mzml_files$file_name%in%files_loaded(),]
+    
+    files_to_load(mzml_files$file_name[input$found_files_rows_selected])
+  })
+  
+  # Observe file load button
+  # When clicked, load the files which are currently in files_to_load
+  # Use a Shiny-specific withProgress bar
+  observeEvent(input$loadem, {
+    req(files_to_load())
+    filepaths <- paste0(wd, "MSMS files/", files_to_load(), ".mzML.gz")
+    new_MS1_data <- list()
+    new_MS2_data <- list()
+    n_files <- length(filepaths)
+    withProgress({
+      for(i in seq_along(files_to_load())){
+        setProgress(value = (i-1)/n_files, detail = basename(files_to_load()[[i]]))
+        mzml_data <- grabMSdata(filepaths[[i]], grab_what = c("MS1", "MS2"))
+        current_MS1_data(rbind(current_MS1_data(), mzml_data$MS1))
+        current_MS2_data(rbind(current_MS2_data(), mzml_data$MS2))
+      }
+      setProgress(value = n_files, detail = "Done!")
+    }, message = "Loading your data...", value = 0)
+
+    clean_filenames <- gsub("\\.mzML|\\.mzXML$", "", basename(files_to_load()))
+    
+    # Add files_to_load to files_loaded and clear out files_to_load
+    files_loaded(c(files_loaded(), files_to_load()))
+    files_to_load(NULL)
+  })
+  
   # Use plotly to render the MS1 chromatogram (top chart)
   output$MS1_chrom <- renderPlotly({
     # Check whether an MS1 data exists - if not, don't bother plotting
     req(current_MS1_data())
+    req(current_mz())
     
     # Grab Extracted Ion Chromatogram - i.e. points within a given
     # mass window. pmppm() takes a mass and a ppm accuracy and returns
     # an upper and lower mass bound, and data.table's between()
     # does a binary search to locate the relevant data points.
-    EIC <- current_MS1_data()[mz%between%pmppm(input$mz, input$ppm)]
+    EIC <- current_MS1_data()[mz%between%pmppm(current_mz(), input$ppm)]
     if(!nrow(EIC)){
-      return(plot_ly(x=1, y=1, text="No data found :/", type = "scatter", mode="text"))
+      return(plot_ly(x=1, y=1, text="No data found :/", type = "scatter", 
+                     mode="text") %>% layout(yaxis=list(title=""), xaxis=list(title="")))
     }
-    
+
     # Create the plotly, with x=retention time, y=intensity, and color by file
     p <- plot_ly(source="MS1") %>%
       add_trace(data = EIC, type="scatter", 
                 x=~rt, y=~int, color=~filename,
                 mode="lines", hoverinfo='skip') %>%
-      layout(legend = list(orientation="h", x=0.5, y=100), showlegend=TRUE)
+      layout(legend = list(orientation="h", x=0.5, y=100), showlegend=TRUE,
+             xaxis=list(title = "Retention time"), yaxis=list(title = "Intensity")
+             )
     # Add the legend at top middle, in horizontal layout
     
     # If the loaded files contain MSMS data, add points on the chromatogram
     # that can be clicked on
     if(!is.null(current_MS2_data())){
       # Collect MSMS data that corresponds to the parent mass (premz)
-      MS2_scans <- current_MS2_data()[premz%between%pmppm(input$mz, input$ppm)]
-      
-      # Fun jujitsu code
-      # Since the MS2 scans follow the MS1 scan that got plotted, we need to
-      # find the nearest MS1 scan and add the MS2 point to the MS1 coordinates
-      MS2_scans <- unique(MS2_scans[,c("rt", "voltage", "filename")])
-      nearest_MS1 <- lapply(split(MS2_scans, seq_len(nrow(MS2_scans))), function(MS2_scan){
-        EIC_file <- EIC[filename==MS2_scan$filename]
-        ms1_scan_data <- EIC_file[which.min(abs(EIC_file$rt-MS2_scan$rt)), c("rt", "int")]
-        names(ms1_scan_data) <- c("rt_to_plot", "int_to_plot")
-        cbind(ms1_scan_data, MS2_scan[,c("rt", "voltage", "filename")])
-      })
-      nearest_MS1 <- do.call(what = rbind, nearest_MS1)
-      nearest_MS1$label <- paste0(
-        'Retention time: ', round(nearest_MS1$rt_to_plot, digits = 3), ' min<br>',
-        'Intensity: ', nearest_MS1$int_to_plot, '<br>',
-        'Voltage: ', nearest_MS1$voltage, 'V<br>',
-        'Filename: ', nearest_MS1$filename
-      )
-      
-      # Add MS2 data points to the plot, if they exist
-      p <- p %>%
-        add_trace(data = nearest_MS1, type="scatter", 
-                  x=~rt_to_plot, y=~int_to_plot, 
-                  color=~filename, text=~label,
-                  customdata=~rt,
-                  hovertemplate=paste0('%{text}<extra></extra>'),
-                  mode="markers", showlegend = FALSE)
+      MS2_scans <- current_MS2_data()[premz%between%pmppm(current_mz(), input$ppm)]
+      if(nrow(MS2_scans)>0){
+        # Fun jujitsu code
+        # Since the MS2 scans follow the MS1 scan that got plotted, we need to
+        # find the nearest MS1 scan and add the MS2 point to the MS1 coordinates
+        MS2_scans <- unique(MS2_scans[,c("rt", "voltage", "filename")])
+        nearest_MS1 <- lapply(split(MS2_scans, seq_len(nrow(MS2_scans))), function(MS2_scan){
+          EIC_file <- EIC[filename==MS2_scan$filename]
+          ms1_scan_data <- EIC_file[which.min(abs(EIC_file$rt-MS2_scan$rt)), c("rt", "int")]
+          names(ms1_scan_data) <- c("rt_to_plot", "int_to_plot")
+          cbind(ms1_scan_data, MS2_scan[,c("rt", "voltage", "filename")])
+        })
+        nearest_MS1 <- do.call(what = rbind, nearest_MS1)
+        nearest_MS1$label <- paste0(
+          'Retention time: ', round(nearest_MS1$rt_to_plot, digits = 3), ' min<br>',
+          'Intensity: ', nearest_MS1$int_to_plot, '<br>',
+          'Voltage: ', nearest_MS1$voltage, 'V<br>',
+          'Filename: ', nearest_MS1$filename
+        )
+        
+        # Add MS2 data points to the plot, if they exist
+        p <- p %>%
+          add_trace(data = nearest_MS1, type="scatter",
+                    x=~rt_to_plot, y=~int_to_plot,
+                    color=~filename, text=~label,
+                    customdata=~rt,
+                    hovertemplate=paste0('%{text}<extra></extra>'),
+                    mode="markers", showlegend = FALSE)
+      }
     }
     # Return the final plotly object
     p
@@ -222,7 +285,11 @@ server <- function(input, output, session){
     req(selected_scan)
     
     # Grab MS2 data that's close to the precursor mass (premz)
-    mass_MS2_data <- current_MS2_data()[premz%between%pmppm(input$mz, input$ppm)]
+    mass_MS2_data <- current_MS2_data()[premz%between%pmppm(current_mz(), input$ppm)]
+    if(!nrow(mass_MS2_data)){
+      return(plot_ly(x=1, y=1, text="No data found :/", type = "scatter", 
+                     mode="text") %>% layout(yaxis=list(title=""), xaxis=list(title="")))
+    }
     
     # Fun jiujitsu code to again find that weird "closest" MS2 scan to the 
     # chosen MS1
@@ -255,45 +322,10 @@ server <- function(input, output, session){
       add_trace(data=MS2_data, x=~fragmz, y=~int,
                 type="scatter", mode="markers",
                 marker=list(color="black")) %>%
-      layout(xaxis = list(range=c(0, input$mz*1.1)),
+      layout(xaxis = list(range=c(0, current_mz()*1.1)),
              showlegend=FALSE)
   })
   
-  # Observe clicked text
-  # When text is clicked, move it into the "files to load" object and paste
-  # the current directory name to it
-  observeEvent(input$clicked_text, {
-    files_to_load(c(files_to_load(), input$clicked_text))
-  })
-  
-  # Observe file load button
-  # When clicked, load the files which are currently in files_to_load
-  # Use a Shiny-specific withProgress bar
-  observeEvent(input$loadem, {
-    req(files_to_load())
-    filepaths <- paste0("MSMS files/", files_to_load(), ".mzML.gz")
-    new_MS1_data <- list()
-    new_MS2_data <- list()
-    n_files <- length(filepaths)
-    withProgress({
-      for(i in seq_along(files_to_load())){
-        setProgress(value = (i-1)/n_files, detail = basename(files_to_load()[[i]]))
-        mzml_data <- grabMSdata(filepaths[[i]], grab_what = c("MS1", "MS2"))
-        current_MS1_data(rbind(current_MS1_data(), mzml_data$MS1))
-        current_MS2_data(rbind(current_MS2_data(), mzml_data$MS2))
-      }
-      setProgress(value = n_files, detail = "Done!")
-    }, message = "Loading your data...", value = 0)
-
-    clean_filenames <- gsub("\\.mzML|\\.mzXML$", "", basename(files_to_load()))
-    
-    # Combine any existing MS1 and MS2 data with the new data
-    # current_MS2_data(rbind(current_MS2_data(), new_MS2_data[[1]]))
-    
-    # Add files_to_load to files_loaded and clear out files_to_load
-    files_loaded(c(files_loaded(), files_to_load()))
-    files_to_load(NULL)
-  })
 }
 
 
