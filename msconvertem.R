@@ -1,7 +1,7 @@
 library(tidyverse)
 library(pbapply)
 
-outfile <- "G:/Shared drives/Ingalls Lab/Collaborative_Projects/Database_work/Data_Browser/MSMS files"
+outfile <- "G:/Shared drives/Ingalls Lab/Collaborative_Projects/MARS_project/Data_Browser/MSMS files"
 already_converted <- list.files(path = outfile) %>% str_replace(".mzML.gz", "")
 
 file_data <- read.csv("metadata.csv") %>%
