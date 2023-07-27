@@ -15,7 +15,11 @@ if(any(missing_packages)){
   choice <- "neither"
   while(!choice%in%c("1", "2")){
     message("Choose 1 or 2 by entering that number here: ")
-    choice <- readLines(con = "stdin", n = 1)
+    if(interactive()){
+      choice <- readline()
+    } else {
+      choice <- readLines(con = "stdin", n = 1)
+    }
   }
   if(choice=="1"){
     message("Okay, I'll try to install them.")
@@ -30,10 +34,14 @@ if(any(missing_packages)){
     }
   } else if (choice=="2"){
     message("Okay, I'll let you do it yourself. Press Enter to exit.")
-    readline()
+    if(interactive()){
+      readline()
+    } else {
+      readLines(con = "stdin", n = 1)
+    }
   } else {
     message("How on earth did you do that?")
-    readline()
+    readLines(con = "stdin", n = 1)
   }
 }
 
@@ -42,19 +50,14 @@ library(plotly)
 library(data.table)
 library(RaMS)
 
-# For interactive purposes
-if(interactive()){
-  wd <- "../"
-} else {
-  wd <- ""
-}
 
-metadata <- fread(paste0(wd, "metadata.csv"))
+metadata <- fread("metadata.csv")
 names(metadata) <- tolower(gsub(" ", "_", names(metadata)))
-metadata <- metadata[project_name!=""]
+metadata <- metadata[project_name!=""&file_name!=""&file_path!=""]
 
-stan_data <- fread(paste0(wd, "Ingalls_Lab_Standards_NEW.csv"))
-stan_data <- stan_data[order(z,Fraction1,Compound.Name_figure),
+
+stan_data <- fread("Ingalls_Lab_Standards_NEW.csv")
+stan_data <- stan_data[order(Compound.Name_figure),
                        c("Compound.Name_figure", "m.z", "z", "Fraction1")]
 stan_data <- stan_data[!is.na(m.z)]
 stan_data$polarity <- ifelse(stan_data$z==1, "pos", "neg")
@@ -65,7 +68,7 @@ stan_choices <- split(stan_choices, stan_data$split)
 stan_choices <- stan_choices[c("HILICPos (pos)", "HILICNeg (neg)", "CyanoDCM (pos)",
                                "CyanoAq (pos)", "CyanoAq (neg)")]
 
-files <- data.frame(file_name=gsub(".mzML.*", "", list.files(paste0(wd, "MSMS files"))))
+files <- data.frame(file_name=gsub(".mzML.*", "", list.files("MSMS files")))
 # files <- files[!files$file_name%in%c(files_to_load(), files_loaded()),,drop=FALSE]
 mzml_files <- merge(files, metadata, by = "file_name")[
   c("file_name", setdiff(names(metadata), c("file_path", "file_name")))
@@ -81,33 +84,41 @@ mzml_files <- merge(files, metadata, by = "file_name")[
 
 ui <- fluidPage(
   # Include custom CSS so it looks pretty
-  tags$head(includeCSS(paste0(wd, "app_files/sandstone.mod.css"))),
+  tags$head(includeCSS("sandstone.mod.css")),
   
-  # Default sidebar layout
-  sidebarLayout(
-    sidebarPanel(
-      selectInput(inputId = "stan_mz", label = "Pick a standard:",
-                  choices = stan_choices, multiple = FALSE, selectize = TRUE),
-      p("or"),
-      numericInput(inputId = "mz", label = "Enter a mass of interest:", value = 118.0865),
-      numericInput(inputId = "ppm", label = "Enter instrument ppm:", value = 5),
-      checkboxGroupInput(inputId = "which_cruises", label = "Which cruises?",
-                         choices = sort(unique(metadata$project_name)),
-                         selected = sort(unique(metadata$project_name))),
-      br(),
-      strong("Files to load:"),
-      tableOutput("files_to_load"),
-      actionButton(inputId = "loadem", label = "Load selected files"),
-      style="margin-top: 20px; position: fixed;", 
-      width = 3
-    ),
-    mainPanel(
-      plotlyOutput("MS1_chrom", height="300px"),
-      plotlyOutput("MS2_chrom", height="300px"),
-      strong("Choose files:"),
-      DT::dataTableOutput("found_files"),
-      style="margin-top: 20px;"
+  fluidRow(
+    sidebarLayout(
+      sidebarPanel(
+        strong("Choose files to load from table at bottom:"),
+        tableOutput("files_to_load"),
+        actionButton(inputId = "loadem", label = "Load selected files"),
+        br(),
+        br(),
+        selectInput(inputId = "stan_mz", label = "Pick a standard:",
+                    choices = stan_choices, multiple = FALSE, selectize = TRUE),
+        numericInput(inputId = "mz", label = "or enter a mass directly:", value = 118.0865),
+        numericInput(inputId = "ppm", label = "Enter instrument ppm:", value = 5),
+        checkboxGroupInput(inputId = "polarity", label = "Particular polarity?",
+                           choices = c(Positive="pos", Negative="neg"), 
+                           selected = c(Positive="pos", Negative="neg"),
+                           inline = TRUE),
+        checkboxGroupInput(inputId = "which_cruises", label = "Which cruises?",
+                           choices = sort(unique(metadata$project_name)),
+                           selected = sort(unique(metadata$project_name))),
+        actionButton(inputId = "clearchecks", label = "Uncheck all"),
+        style="margin: 10px;",
+        width = 3
+      ),
+      mainPanel(
+        plotlyOutput("MS1_chrom", height="300px"),
+        plotlyOutput("MS2_chrom", height="300px"),
+        style="margin-top: 20px;"
+      )
     )
+  ),
+  fluidRow(
+    DT::dataTableOutput("found_files"),
+    style="margin: 20px;"
   )
 )
 
@@ -141,14 +152,21 @@ server <- function(input, output, session){
   
   observeEvent(input$stan_mz, {
     current_mz(as.numeric(input$stan_mz))
+    updateNumericInput(session=session, inputId = "mz", 
+                       value = as.numeric(input$stan_mz))
   })
   observeEvent(input$mz, {
     current_mz(input$mz)
+  })
+  observeEvent(input$clearchecks, {
+    print("Clearing checks")
+    updateCheckboxGroupInput(inputId = "which_cruises", selected = character(0))
   })
   
   output$found_files <- DT::renderDataTable({
     mzml_files <- mzml_files[mzml_files$project_name%in%input$which_cruises,]
     mzml_files <- mzml_files[!mzml_files$file_name%in%files_loaded(),]
+    mzml_files <- mzml_files[tolower(mzml_files$polarity)%in%input$polarity,]
     mzml_files
   }, escape = FALSE, options = list(
     scrollX = TRUE, 
@@ -182,7 +200,7 @@ server <- function(input, output, session){
   # Use a Shiny-specific withProgress bar
   observeEvent(input$loadem, {
     req(files_to_load())
-    filepaths <- paste0(wd, "MSMS files/", files_to_load(), ".mzML.gz")
+    filepaths <- paste0("MSMS files/", files_to_load(), ".mzML.gz")
     new_MS1_data <- list()
     new_MS2_data <- list()
     n_files <- length(filepaths)
